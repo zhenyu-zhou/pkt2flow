@@ -71,13 +71,14 @@ static void usage(char *progname)
 	fprintf(stderr, "	-v	also dump the in(v)alid TCP flows without the SYN option\n");
 	fprintf(stderr, "	-x	also dump non-UDP/non-TCP IP flows\n");
 	fprintf(stderr, "	-o	(o)utput directory\n");
+	fprintf(stderr, "        -p      dump from I(P) only trace without ethernet layer\n");
 }
 
 
 static void parseargs(int argc, char *argv[])
 {
 	int opt;
-	const char *optstr = "uvxo:h";
+	const char *optstr = "uvxo:hp";
 	while ((opt = getopt(argc, argv, optstr)) != -1) {
 		switch (opt) {
 		case 'h':
@@ -94,6 +95,9 @@ static void parseargs(int argc, char *argv[])
 			break;
 		case 'x':
 			dump_allowed |= DUMP_OTHER_ALLOWED;
+			break;
+		case 'p':
+			dump_allowed |= DUMP_FROM_IP;
 			break;
 		default:
 			usage(argv [0]);
@@ -377,7 +381,14 @@ static void process_trace(void)
 	struct af_6tuple af_6tuple;
 
 	while ((pkt = (u_char *)pcap_next(inputp, &hdr)) != NULL) {
-		syn_detected = pcap_handle_ethernet(&af_6tuple, &hdr, pkt);
+		
+		if (!isset_bits(dump_allowed, DUMP_FROM_IP))
+			syn_detected = pcap_handle_ethernet(&af_6tuple, &hdr, pkt);
+		else {
+			syn_detected = pcap_handle_ip(&af_6tuple, pkt, hdr.caplen);
+			af_6tuple.is_vlan = 0;
+		}
+
 		if (syn_detected < 0)
 			continue;
 

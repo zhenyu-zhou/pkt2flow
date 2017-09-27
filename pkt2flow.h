@@ -51,6 +51,7 @@ enum dump_allow_flags {
 	DUMP_OTHER_ALLOWED = BIT(0),
 	DUMP_TCP_NOSYN_ALLOWED = BIT(1),
 	DUMP_UDP_ALLOWED = BIT(2),
+	DUMP_FROM_IP = BIT(3)
 };
 
 enum pkt_dump_file_status {
